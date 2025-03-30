@@ -1,0 +1,123 @@
+---
+title: NYP Shootings
+author: Fredy Paz
+output:
+  pdf_document: default
+---
+
+# NYPD Shootings Analysis
+
+## Overview
+
+The data set used in this analysis is from the City of New York. It contains detailed records of shooting incidents.
+
+The intent of this document is to conduct analysis and gather insights. We will look at a breakdown of incidents per boroughs, date, and time of day.
+
+Importing data into variable "nypddata" from <https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD>
+
+```{r}
+library(tidyverse)
+nypddata <-
+read.csv("https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD")
+```
+
+Summary of data
+
+```{r}
+summary(nypddata)
+```
+
+## Data Cleaning
+
+Removing columns PRECINT, JURISDICTION_CODE
+
+```{r}
+nypddatatidy <- nypddata %>% select(-JURISDICTION_CODE, -PRECINCT)
+```
+
+Changing OCCUR_DATE to Date format
+
+```{r}
+nypddatatidy <- nypddatatidy %>% mutate(OCCUR_DATE = mdy(OCCUR_DATE))
+```
+
+## Data Analysis
+
+Group shootings by date, and provide a count of shooting by date
+
+```{r}
+nypd_bydate <- nypddatatidy %>% group_by(OCCUR_DATE) %>% summarize(total_incidents = n())
+```
+
+Adding a plot to view shootings by date
+
+```{r}
+ggplot(nypd_bydate, aes(x = OCCUR_DATE, y = total_incidents)) + geom_line(aes(color = "total_incidents")) + labs(title = "NYC Shootings by Date", x = "Date", y = "Total Incidents")
+```
+
+Getting exact date with most shootings
+
+```{r}
+maxdate <- nypd_bydate %>% filter(total_incidents == max(total_incidents))
+```
+
+Group shooting by Boroughs
+
+```{r}
+nypd_byboro <- nypddatatidy %>% group_by(BORO) %>% summarize(total_incidents = n())
+```
+
+Adding a bar chart to show shootings by Boroughs
+
+```{r}
+
+ggplot(nypd_byboro,aes(x = BORO, y = total_incidents)) + geom_col(fill = "red")
+```
+
+Adding a variable to change OCCUR_TIME to time format hms
+
+```{r}
+nypddatatidy <- nypddatatidy %>% mutate(time_hour = hour(hms(OCCUR_TIME)))
+```
+
+Grouping by hour of day and count shootings
+
+```{r}
+nypd_byhour <- nypddatatidy %>% group_by(time_hour) %>% summarise(total_incidents = n())
+```
+
+Adding a plot with linear model showing shootings by time of day
+
+```{r}
+ggplot(nypd_byhour, aes(x = time_hour, y = total_incidents)) +
+    geom_point(color = "red") +  
+    geom_smooth(formula = y ~ x, method = "lm", se = TRUE, color = "black", linetype = "dashed") +  
+    labs(title = "Shootings by Time of Day with Linear Trend",
+         x = "Hour of Day (24-hour format)",
+         y = "Total Shootings")
+```
+
+The borough with the most shootings over the history of the data is Brooklyn with 11,346 total incidents.
+
+```{r}
+maxboro <- nypd_byboro %>% filter(total_incidents == max(total_incidents))
+maxboro
+```
+
+The date with the most shootings was July 5th 2020 with 47 shootings
+
+```{r}
+maxdate
+```
+
+The bias that I identified was assuming that the most shootings occurred during peak covid times and that they would be mostly located in neighborhoods that we have historically associated with violence and poverty. I assumed Manhattan would not be at the top.
+
+I reset my mindset to not make assumptions, relied on the data, and corroborated my findings by searching news for the specific date with most deaths. See resources below.
+
+I found a few news articles mentioning the spike in violence but there was no single explanation or cause. It seems to be a combination of July 4th activity coupled with covid restrctions easing.
+
+Resources:
+
+<https://www.nbcnewyork.com/news/local/bullet-strikes-nypd-patrol-vehicle-misses-officers-sitting-inside/2500243/>
+
+<https://abc7ny.com/nyc-shootings-2020-last-night-this-week-in/6299513/>
