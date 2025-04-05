@@ -1,6 +1,6 @@
 ---
-title: NYP Shootings
-author: Fredy Paz
+title: "NYP Shootings"
+author: "Fredy Paz"
 output:
   pdf_document: default
 ---
@@ -59,9 +59,10 @@ Getting exact date with most shootings
 
 ```{r}
 maxdate <- nypd_bydate %>% filter(total_incidents == max(total_incidents))
+maxdate
 ```
 
-Group shooting by Boroughs
+## Shootings by Boroughs
 
 ```{r}
 nypd_byboro <- nypddatatidy %>% group_by(BORO) %>% summarize(total_incidents = n())
@@ -73,6 +74,24 @@ Adding a bar chart to show shootings by Boroughs
 
 ggplot(nypd_byboro,aes(x = BORO, y = total_incidents)) + geom_col(fill = "red")
 ```
+
+Out of curiosity, I would like to see if shootings in Brooklyn have been consistent or if there was any variation throughout the time period.
+
+I will start by filtering to Brooklyn and creating a chart to visualize shootings by date
+
+```{r}
+nypd_bydate_brooklyn <- nypddatatidy %>% filter(BORO == "BROOKLYN")  %>% group_by(OCCUR_DATE) %>% summarize(total_incidents = n())
+```
+
+Creating a chart
+
+```{r}
+ggplot(nypd_bydate_brooklyn, aes(x = OCCUR_DATE, y = total_incidents)) + geom_line(aes(color = "total_incidents")) + labs(title = "Brooklyn Shootings by Date", x = "Date", y = "Total Incidents")
+```
+
+Shootings appear to have fluctuations, spiking in 2020 but decreasing since then. We also [have confirmation](http://www.brooklynda.org/2024/12/31/brooklyn-had-the-fewest-shootings-and-shooting-victims-on-record-beating-pre-pandemic-lows-murders-and-serious-crime-down-by-some-6/#:~:text=District%20Attorney%20Gonzalez%20said%2C%20%E2%80%9CBrooklyn,centered%20strategies%20to%20reduce%20shootings.) from the Brooklyn attorney's office with additional data.
+
+## Shootings by time of day
 
 Adding a variable to change OCCUR_TIME to time format hms
 
